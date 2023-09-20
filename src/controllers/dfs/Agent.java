@@ -120,7 +120,7 @@ Visited x=2.0 y=4.0
             DFSActions.add(action);
             if (stCopy.getGameWinner() == Types.WINNER.PLAYER_WINS) {
                 return true;
-            } else if (Visited.contains(stCopy.getAvatarOrientation()) || stCopy.isGameOver()) {
+            } else if (CheckifVisited(stCopy) || stCopy.isGameOver()) {
                 stCopy = stataObs.copy();
                 DFSActions.remove(DFSActions.size() - 1);
                 continue;
