@@ -14,12 +14,12 @@ import tools.Vector2d;
 
 import static java.lang.Double.min;
 
+// Node类用于描述一个状态，包括状态的得分、状态本身、状态的动作、状态的深度、是否拿过钥匙
 class Node implements Comparable<Node> {
     private double score;
     private StateObservation stateObs;
     private ArrayList<Types.ACTIONS> Actions;
     private int depth;
-
     public boolean GetKey;
 
     public Node(double score, StateObservation stateObs, ArrayList<Types.ACTIONS> Actions, int depth,boolean GetKey) {
@@ -50,6 +50,8 @@ class Node implements Comparable<Node> {
     public int getDepth() {
         return depth;
     }
+
+    //排序按照score启发式得分降序排序
     @Override
     public int compareTo(Node other) {
         // 降序排列
@@ -91,12 +93,6 @@ public class Agent extends AbstractPlayer {
     private ArrayList<StateObservation> Visited= new ArrayList<StateObservation>();
     private ArrayList<Types.ACTIONS>  MaxAction= new ArrayList<Types.ACTIONS>();
     private Vector2d goalpos,keypos;
-    /**
-     * Public constructor with state observation and time due.
-     * @param so state observation of the current game.
-     * @param elapsedTimer Timer for the controller creation.
-     */
-
     public Agent(StateObservation so, ElapsedCpuTimer elapsedTimer)
     {
         randomGenerator = new Random();
@@ -108,6 +104,7 @@ public class Agent extends AbstractPlayer {
         keypos = movingPositions[0].get(0).position ;//钥匙的坐标
     }
 
+    //检查是否走过相同的状态
     private boolean CheckifVisited(StateObservation stataObs) {
         for (int i = 0; i < Visited.size(); i++) {
             if (stataObs.equalPosition(Visited.get(i))) {
@@ -116,9 +113,12 @@ public class Agent extends AbstractPlayer {
         }
         return false;
     }
+    //获得两点的距离
     int GetDistance(Vector2d a,Vector2d b){
         return (int)Math.abs(a.x-b.x)/50+(int)Math.abs(a.y-b.y)/50;
     }
+
+    //检查openlist是否走过相同的状态
     private Node contain(TreeSet<Node> Todolist,StateObservation stataObs){
         for(Node node:Todolist){
             if(node.getStateObs().equalPosition(stataObs)){
@@ -144,6 +144,7 @@ public class Agent extends AbstractPlayer {
         return Box;
     }
 
+    //得到与box最近的坑的距离
     private double GetDistanceHole(int x,int y,StateObservation stateObs){
         ArrayList<Observation>[][] observationGrid= stateObs.getObservationGrid();
         int n=observationGrid.length,m=observationGrid[0].length;
@@ -163,6 +164,7 @@ public class Agent extends AbstractPlayer {
 
     }
 
+    //得到与精灵最近的额box的距离
     private double GetMinDistanceBox(StateObservation stateObs){
         ArrayList<Observation>[][] observationGrid= stateObs.getObservationGrid();
         ArrayList<Vector2d> Box= new ArrayList<tools.Vector2d>();
@@ -185,6 +187,7 @@ public class Agent extends AbstractPlayer {
         else return sum;
     }
 
+    //得到key的坐标集合
     private ArrayList<Vector2d> Getkey(StateObservation stataObs){
         ArrayList<Observation>[][] observationGrid= stataObs.getObservationGrid();
         ArrayList<Vector2d> Key= new ArrayList<tools.Vector2d>();
@@ -202,8 +205,9 @@ public class Agent extends AbstractPlayer {
         return Key;
     }
 
+    //启发式函数
     private double heuristic(StateObservation stateObs,boolean HasGetKey,int dep){
-        double score=0,W_0=1,W_1=100000000,W_2=100,W_3=-5,W_4_1=30,W_4_2=10,W_4_3=100,W_4_4=-10,W_5=-10;
+        double score=0,W_0=0,W_1=100000000,W_2=100,W_3=-5,W_4_1=30,W_4_2=10,W_4_3=1000,W_4_4=-10,W_5=-10;
         double Dep,WinorLose=0,Nowscore=0,Distance,Box_1=0,Box_2=0,Box_3=0,Box_4=0,GG=0,MinDistanceBox=0;
 
         Dep=dep;
@@ -233,12 +237,10 @@ public class Agent extends AbstractPlayer {
                 if(observationGrid[i][j].size()!=0){
                     for(int k=0;k<observationGrid[i][j].size();k++){
                         Map[i][j]=observationGrid[i][j].get(k).itype;
-                     //   System.out.println ("x=" + i + " y=" + j + " type=" + Map[i][j]);
                     }
                 }
                 else{
                     Map[i][j]=-1;
-                   // System.out.println("x=" + i + " y=" + j + " type=" + Map[i][j]);
                 }
             }
         }
@@ -265,10 +267,8 @@ public class Agent extends AbstractPlayer {
                 if(Map[x+1][y]==-1&&Map[x-1][y]==-1) Box_1++;
             }
             if(y<m-1&&y>0){
-               // System.out.println("x=" + x + " y=" + y + " type=" + Map[x][y+1] + " " + Map[x][y-1]);
                 if(Map[x][y+1]==-1&&Map[x][y-1]==-1) Box_1++;
             }
-            //System.out.println("Box_1= " + Box_1);
 
             if(x<n-1) if(Map[x+1][y]==2) Box_2++;
             if(x>0) if(Map[x-1][y]==2) Box_2++;
@@ -287,61 +287,31 @@ public class Agent extends AbstractPlayer {
             Box_4+=GetDistanceHole(x*50,y*50,stateObs);
 
         }
-     //   System.out.println(stateObs.getAvatarPosition().x/50 + ", " + stateObs.getAvatarPosition().y/50 + "---------------");
-   //     System.out.println("Dep= " + Dep + " WinorLose= " + WinorLose + " Nowscore= " + Nowscore + " Distance= " + Distance + " Box_1= " + Box_1 + " Box_2= " + Box_2 + " Box_3= " + Box_3 + " Box_4= " + Box_4 + " GG= " + GG);
+
         if(HasGetKey) GG--;
 
         MinDistanceBox=GetMinDistanceBox(stateObs);
 
         score=W_0*Dep+W_1*WinorLose+W_2*Nowscore+W_3*Distance+W_4_1*Box_1+W_4_2*Box_2+W_4_3*Box_3+W_4_4*Box_4+GG*-1000000+W_5*MinDistanceBox;
-        System.out.println("score= " + score + " Box_4 " + Box_4 + " MinDistanceBox= " + MinDistanceBox + "!!!!!!!");
         return score;
     }
     ArrayList<Types.ACTIONS> Astar(Node StartNode, ElapsedCpuTimer elapsedTimer,int dep){
         int tot=0;
         Todolist.add(StartNode);
         while(!Todolist.isEmpty()){
-           /* for(Node x : Todolist){
-
-                System.out.println("before score= " + x.getScore() + " depth= " + x.getDepth() + " GetKey= " + x.GetKey + "Positon= " + (x.getStateObs().getAvatarPosition().x/50)+","+(x.getStateObs().getAvatarPosition().y/50) + "!!!!!!!!");
-            }*/
             Node now=Todolist.pollFirst();
-           // heuristic(now.getStateObs(),now.GetKey,now.getDepth(),false);
             System.out.println("score= " + now.getScore() + " depth= " + now.getDepth() + " GetKey= " + now.GetKey + "Positon= " + (now.getStateObs().getAvatarPosition().x/50)+","+(now.getStateObs().getAvatarPosition().y/50)+"-------------");
             tot++;
-
-           /* for(int i=0;i<now.getActions().size();i++){
-                System.out.println(now.getActions().get(i));
-            }*/
-           /* System.out.println("size= "  + Todolist.size());
-            for(Node x : Todolist){
-
-                    System.out.println("score= " + x.getScore() + " depth= " + x.getDepth() + " GetKey= " + x.GetKey + "Positon= " + (x.getStateObs().getAvatarPosition().x/50)+","+(x.getStateObs().getAvatarPosition().y/50) + "!!!!!!!!");
-            }*/
-
-          //  if(tot==2) return now.getActions();
             StateObservation stataObs=now.getStateObs();
             Visited.add(stataObs);
-           /* ArrayList<Types.ACTIONS>  AstarAction= (ArrayList<Types.ACTIONS>) now.getActions().clone();
-            for(int i=0;i<AstarAction.size();i++){
-                System.out.println(AstarAction.get(i));
-            }*/
             ArrayList<Types.ACTIONS> actions = now.getStateObs().getAvailableActions();
             for(Types.ACTIONS action:actions){
-              //  System.out.println("action= " + action + " x=" + stataObs.getAvatarPosition().x/50 + " y=" + stataObs.getAvatarPosition().y/50);
                 StateObservation stCopy = now.getStateObs().copy();
                 stCopy.advance(action);
-               // System.out.println("action= " + action + " x=" + stCopy.getAvatarPosition().x/50 + " y=" + stCopy.getAvatarPosition().y/50);
-                /*if(stCopy.getAvatarPosition().x/50==2&&stCopy.getAvatarPosition().y/50==4) {
-                    System.out.println("now=key!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + heuristic(stCopy,now.GetKey,dep+1));
-                }*/
                 ArrayList<Types.ACTIONS>  AstarAction= (ArrayList<Types.ACTIONS>) now.getActions().clone();
                 AstarAction.add(action);
                 if(stCopy.getGameWinner()==Types.WINNER.PLAYER_WINS){
                     OK=true;
-                   /* for(int i=0;i<AstarAction.size();i++){
-                        System.out.println(AstarAction.get(i));
-                    }*/
                     return AstarAction;
                 }
                 if(stCopy.getGameWinner()==Types.WINNER.PLAYER_LOSES||CheckifVisited(stCopy)){
@@ -354,10 +324,6 @@ public class Agent extends AbstractPlayer {
                     NowGetKey=true;
                 }
 
-               /* if(stCopy.getAvatarPosition().x/50==2&&stCopy.getAvatarPosition().y/50==4){
-                    System.out.println("now=key!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + heuristic(stCopy,NowGetKey,dep+1));
-                }*/
-
                 Node node=contain(Todolist,stCopy);
                 if(node!=null){
                     double score0=node.getScore();
@@ -368,16 +334,12 @@ public class Agent extends AbstractPlayer {
                     }
                     else{
                         Node Newnode=new Node(score1,stCopy,AstarAction, dep+1,NowGetKey|now.GetKey);
-                       // System.out.println("before: " + Todolist.size());
                         Todolist.remove(node);
-                        //System.out.println("mid: " + Todolist.size());
                         Todolist.add(Newnode);
-                        //System.out.println("after: " + Todolist.size());
                     }
                 }
                 else{
                     Node Newnode=new Node(heuristic(stCopy,NowGetKey|now.GetKey,dep+1),stCopy,AstarAction, dep+1,NowGetKey|now.GetKey);
-                   // System.out.println("Newnode= " + Newnode.getScore() + " depth= " + Newnode.getDepth() + " GetKey= " + Newnode.GetKey + "Positon= " + (Newnode.getStateObs().getAvatarPosition().x/50)+","+(Newnode.getStateObs().getAvatarPosition().y/50));
                     Todolist.add(Newnode);
                 }
             }
@@ -389,17 +351,6 @@ public class Agent extends AbstractPlayer {
     }
 
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-
-       /* ArrayList<Observation>[][] observationGrid= stateObs.getObservationGrid();
-        for(int i=0;i<observationGrid.length;i++){
-            for(int j=0;j<observationGrid[i].length;j++){
-                if(observationGrid[i][j]!=null){
-                    for(int k=0;k<observationGrid[i][j].size();k++){
-                        System.out.println("grid x=" + (observationGrid[i][j].get(k).position.x/50+1) + " y=" + (observationGrid[i][j].get(k).position.y/50+1 + " type=" + observationGrid[i][j].get(k).itype));
-                    }
-                }
-            }
-        }*/
 
         if(OK==false){
             Node StartNode=new Node(heuristic(stateObs,false,0),stateObs.copy(),new ArrayList<Types.ACTIONS>(),0,false);
@@ -413,12 +364,6 @@ public class Agent extends AbstractPlayer {
         }
     }
 
-    /**
-     * Prints the number of different types of sprites available in the "positions" array.
-     * Between brackets, the number of observations of each type.
-     * @param positions array with observations.
-     * @param str identifier to print
-     */
     private void printDebug(ArrayList<Observation>[] positions, String str) {
         if (positions != null) {
             System.out.print(str + ":" + positions.length + "(");
