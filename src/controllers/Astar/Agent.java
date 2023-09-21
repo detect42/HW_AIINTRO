@@ -12,6 +12,8 @@ import ontology.Types;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
+import static java.lang.Double.min;
+
 class Node implements Comparable<Node> {
     private double score;
     private StateObservation stateObs;
@@ -145,19 +147,42 @@ public class Agent extends AbstractPlayer {
     private double GetDistanceHole(int x,int y,StateObservation stateObs){
         ArrayList<Observation>[][] observationGrid= stateObs.getObservationGrid();
         int n=observationGrid.length,m=observationGrid[0].length;
-        double sum=0;int cnt=0;
+        double sum=1e9;
         for(int i=0;i<n;i++){
             for(int j=0;j<m;j++){
                 for(int k=0;k<observationGrid[i][j].size();k++){
                     if(observationGrid[i][j].get(k).itype==2){
-                        sum+=GetDistance(new Vector2d(x,y),observationGrid[i][j].get(k).position);
-                        cnt++;
+                        sum=min(sum,GetDistance(new Vector2d(x,y),observationGrid[i][j].get(k).position));
+
                     }
                 }
             }
         }
-        if(cnt==0) return 0;
-        else return sum/cnt;
+        if(sum==1e9) return 0;
+        else return sum;
+
+    }
+
+    private double GetMinDistanceBox(StateObservation stateObs){
+        ArrayList<Observation>[][] observationGrid= stateObs.getObservationGrid();
+        ArrayList<Vector2d> Box= new ArrayList<tools.Vector2d>();
+        for(int i=0;i<observationGrid.length;i++){
+            for(int j=0;j<observationGrid[i].length;j++){
+                if(observationGrid[i][j]!=null){
+                    for(int k=0;k<observationGrid[i][j].size();k++){
+                        if(observationGrid[i][j].get(k).itype==8){
+                            Box.add(observationGrid[i][j].get(k).position);
+                        }
+                    }
+                }
+            }
+        }
+        double sum=1e9;
+        for(int i=0;i<Box.size();i++){
+            sum=min(sum,GetDistance(stateObs.getAvatarPosition(),Box.get(i)));
+        }
+        if(sum==1e9) return 0;
+        else return sum;
     }
 
     private ArrayList<Vector2d> Getkey(StateObservation stataObs){
@@ -178,8 +203,8 @@ public class Agent extends AbstractPlayer {
     }
 
     private double heuristic(StateObservation stateObs,boolean HasGetKey,int dep){
-        double score=0,W_0=1,W_1=100000000,W_2=10000,W_3=-50,W_4_1=1,W_4_2=30,W_4_3=10000,W_4_4=-10;
-        double Dep,WinorLose=0,Nowscore=0,Distance,Box_1=0,Box_2=0,Box_3=0,Box_4=0,GG=0;
+        double score=0,W_0=1,W_1=100000000,W_2=100,W_3=-5,W_4_1=30,W_4_2=10,W_4_3=100,W_4_4=-10,W_5=-10;
+        double Dep,WinorLose=0,Nowscore=0,Distance,Box_1=0,Box_2=0,Box_3=0,Box_4=0,GG=0,MinDistanceBox=0;
 
         Dep=dep;
 
@@ -265,8 +290,11 @@ public class Agent extends AbstractPlayer {
      //   System.out.println(stateObs.getAvatarPosition().x/50 + ", " + stateObs.getAvatarPosition().y/50 + "---------------");
    //     System.out.println("Dep= " + Dep + " WinorLose= " + WinorLose + " Nowscore= " + Nowscore + " Distance= " + Distance + " Box_1= " + Box_1 + " Box_2= " + Box_2 + " Box_3= " + Box_3 + " Box_4= " + Box_4 + " GG= " + GG);
         if(HasGetKey) GG--;
-        score=W_0*Dep+W_1*WinorLose+W_2*Nowscore+W_3*Distance+W_4_1*Box_1+W_4_2*Box_2+W_4_3*Box_3+W_4_4*Box_4+GG*-1000000;
-      //  System.out.println("score= " + score);
+
+        MinDistanceBox=GetMinDistanceBox(stateObs);
+
+        score=W_0*Dep+W_1*WinorLose+W_2*Nowscore+W_3*Distance+W_4_1*Box_1+W_4_2*Box_2+W_4_3*Box_3+W_4_4*Box_4+GG*-1000000+W_5*MinDistanceBox;
+        System.out.println("score= " + score + " Box_4 " + Box_4 + " MinDistanceBox= " + MinDistanceBox + "!!!!!!!");
         return score;
     }
     ArrayList<Types.ACTIONS> Astar(Node StartNode, ElapsedCpuTimer elapsedTimer,int dep){

@@ -20,8 +20,8 @@ public class Test
 
         boolean visuals = true; // set to false if you don't want to see the game
         int seed = new Random().nextInt(); // seed for random
-        CompetitionParameters.ACTION_TIME = 1000;
-        ArcadeMachine.runOneGame("examples/gridphysics/bait.txt", "examples/gridphysics/bait_lvl2.txt", true, sampleGA, null, seed, false);
+        CompetitionParameters.ACTION_TIME = 100;
+        ArcadeMachine.runOneGame("examples/gridphysics/bait.txt", "examples/gridphysics/bait_lvl4.txt", true, sampleGA, null, seed, false);
       //  ArcadeMachine.playOneGame( "examples/gridphysics/bait.txt", "examples/gridphysics/bait_lvl1.txt", null, new Random().nextInt());
     }
 }
