@@ -207,7 +207,7 @@ public class Agent extends AbstractPlayer {
 
     //启发式函数
     private double heuristic(StateObservation stateObs,boolean HasGetKey,int dep){
-        double score=0,W_0=0,W_1=100000000,W_2=100,W_3=-5,W_4_1=30,W_4_2=10,W_4_3=1000,W_4_4=-10,W_5=-10;
+        double score=0,W_0=-2,W_1=100000000,W_2=100,W_3=-5,W_4_1=30,W_4_2=10,W_4_3=1000,W_4_4=-10,W_5=-10;
         double Dep,WinorLose=0,Nowscore=0,Distance,Box_1=0,Box_2=0,Box_3=0,Box_4=0,GG=0,MinDistanceBox=0;
 
         Dep=dep;
