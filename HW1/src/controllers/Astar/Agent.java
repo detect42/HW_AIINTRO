@@ -300,7 +300,7 @@ public class Agent extends AbstractPlayer {
         Todolist.add(StartNode);
         while(!Todolist.isEmpty()){
             Node now=Todolist.pollFirst();
-            System.out.println("score= " + now.getScore() + " depth= " + now.getDepth() + " GetKey= " + now.GetKey + "Positon= " + (now.getStateObs().getAvatarPosition().x/50)+","+(now.getStateObs().getAvatarPosition().y/50)+"-------------");
+           // System.out.println("score= " + now.getScore() + " depth= " + now.getDepth() + " GetKey= " + now.GetKey + "Positon= " + (now.getStateObs().getAvatarPosition().x/50)+","+(now.getStateObs().getAvatarPosition().y/50)+"-------------");
             tot++;
             StateObservation stataObs=now.getStateObs();
             Visited.add(stataObs);
